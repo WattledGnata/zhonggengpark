@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "cn.zhonggeng.park",
+  "variantName": "processDebugResources",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "versionCode": 1,
+      "versionName": "1.0",
+      "outputFile": "zhonggengpark-1.0-2021-01-23-17_02_16_debug.apk"
+    }
+  ]
+}

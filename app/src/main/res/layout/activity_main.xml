@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="停 车 缴 费"
+        android:id="@+id/title"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:background="@color/green"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:id="@+id/input_layout"
+        android:gravity="center_vertical"
+        android:layout_below="@+id/title"
+        android:layout_marginHorizontal="15dp"
+        android:layout_marginTop="10dp"
+        >
+
+        <EditText
+            android:id="@+id/input"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="44dp"
+            android:background="#eeeeee"
+            android:textColor="#333333"
+            />
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_weight="0"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:text="保存" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:id="@+id/btn_reset"
+            android:layout_below="@+id/title"
+            android:text="一键重置"
+            />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="15dp"
+        android:layout_below="@id/input_layout"
+        android:id="@+id/account_list"
+        />
+
+</RelativeLayout>

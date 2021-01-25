@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>停车缴费</title>
+	<link rel="stylesheet" type="text/css" href="./css/park_pay.css?1">
+	<link rel="stylesheet" type="text/css" href="./css/style.css">
+	<script src="./js/encrypt/tripledes.js"></script>
+	<script src="./js/encrypt/cipher-core.js"></script>
+	<script src="./js/encrypt/core.js"></script>
+	<script src="./js/encrypt/mode-ecb.js"></script>
+	<script src="./js/encrypt/md5.js"></script>
+	<script src="https://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script>
+	<script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/1.8.1/jquery.min.js"></script>
+	<script src="./js/layer.js"></script>
+	<script type="text/javascript" src="./js/comm.js"></script>
+	<script type="text/javascript" src="./js/wx.js"></script>
+	<script type="text/javascript" src="./js/ele_part.js"></script>
+</head>
+<body>
+	<section class="page1">
+		<div class="title">停车缴费</div>
+		<div class="notice">
+			<p>当前车牌号</p>
+			<p class="num">沪·AT656B</p>
+		</div>
+		<div class="wealth" style="display: none">
+			<div>
+				<p>169</p>
+				<p>可用积分</p>
+			</div>
+			<div>
+				<p>8</p>
+				<p>停车券</p>
+			</div>
+		</div>
+		<ul class="total_info">
+			<li><span>停车费用</span><span class="chargeMoney">¥0.00</span></li>
+			<li><span>入场时间</span><span class="inTime">0</span></li>
+			<li><span>查询时间</span><span class="queryTime">0</span></li>
+			<li onclick="toPage2()"><span>选择优惠券</span><span class="sc" style="color: #e8382f"></span></li>
+		</ul>
+		<div class="confirm_pay"><span>待支付：<span class="chargeMoney">¥0.00</span>元</span><p>已抵扣¥<span class="yihouhui">0</span>元</p><span class="toPay">确认支付</span></div>
+	</section>
+	<section class="page2" hidden style="padding-bottom: 11vw">
+		<ul>
+			
+		</ul>
+		<div class="confirm_pay"><label><input type="checkbox" class="selectAll"><span class="init">全选</span></label><p>已抵扣¥<span class="yihouhui">0</span>元</p><span class="Iamok" onclick="layer.confirm(window.couponarr.length==0?'未选择券，返回吗？':function(){
+			var p=0;
+			window.couponarr.map(function(item) {
+				return p = p + Number(item.val);
+			});
+			if(p>window.chargeMoney){
+				return '确定使用吗？'
+			}else{
+				return '确定使用吗？'
+			}
+		}(), {
+			btn: ['再想想','是的']
+		}, function(e){
+			layer.close(e)
+		}, function(){
+			!function(){
+				var p=0;
+				window.couponarr.map(function(item) {
+					return p = p + Number(item.val);
+				});
+				if(p>window.chargeMoney){
+
+					$('.yihouhui').text(window.chargeMoney/100)
+				}else{
+
+					$('.yihouhui').text(p/100)
+				}
+			}()
+			window.history.go(-1)
+		})">确认使用</span></div>
+	</section>
+	<script type="text/javascript">
+		window.canPay=false
+		window.couponarr=[]
+		document.onready=function(){
+			elePart.load(),elePart.back_prev(0,'','<a href="./park_know.html">停车须知</a>')
+		}
+		$('.num').text(getQueryString('num'))
+		$('.toPay').click(function(){
+			if(!window.canPay) return
+				$.ajax({
+					type:'post',
+					url:Ip+'/api/park/onlinePay',
+					contentType: 'application/json;charset=UTF-8',
+					async:false,
+					data:addSecret({carNumber:getQueryString('num'),memberId:user.id,sellerName:'weixin',payType:10,openid:user.openid,codeIdStr:window.couponarr.map(function(item) {
+						return item.code;
+					}).join(',')}),
+					success:function (data) {
+						if(data.resCode==0){
+							if(data.data.payStatus==1){
+								layer.msg('支付完成,请在15分钟之内离场')
+								setTimeout(function(){window.location.reload()},1000)
+							}else{
+								window.location.href="http://zgg.xiaooo.club/pay/pay.html?outTradeNo="+data.data.outTradeNo
+							}
+						}else{
+							layer.msg(data.resMsg)
+						}
+					},
+					error:function(){
+						alert('出错了')
+					}
+				})
+		})
+		function getCouList(){
+			if(!window.canload){
+				return
+			}
+			window.canload=false
+			$.ajax({
+				type:'post',
+				url:Ip + '/api/coupon/getMyCouponList',
+				contentType: 'application/json;charset=UTF-8',
+				async:false,
+				data:addSecret({mId:user.id,page:window.page,size:window.size,state:0,type:2}),
+				success:function (data) {
+					if(data.resCode==0){
+						$('.page2>ul').append(data.data.map(function(item) {
+							return ("<label><li class=\"item\"><input type=\"checkbox\" data-val=\"" + item.formerPrice + "\" data-code=\"" + item.codeId + "\"><div class=\"val\"><span style=\"font-size:20vw\">1</span>h</div><div class=\"detail\"><p>" + item.couponName + "</p><p>有效期至" + item.useEnd + "</p></div></li></label>");
+						}));
+						if(data.data.length==window.size){
+							window.canload=true
+						}
+					}else{
+						if($('.page2>ul li').length==0){
+							$('.page2>ul').html("<img style=\"display: block;width: 50vw;position: absolute;top: 0;bottom: 0;left: 0;right:  0;margin: auto;\" src=\"./img/nopannel.png\"/>");
+							$('.page2 .confirm_pay').hide()
+						}
+						layer.msg(data.resMsg)
+						window.canload=true
+					}
+				}
+			})
+		}
+		
+		function toPage2(){
+			// if(!window.canPay) return;
+			$('.page1').hide()
+			$('.page2').show()
+			var stateObj = { path: "coupon" };
+			history.pushState(stateObj, "选择优惠券", "#");
+			if($('.page2>ul li').length==0){
+				getCouList()
+			}
+		}
+		function getQueryString(name) {
+			var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)')
+			var r = window.location.search.substr(1).match(reg)
+			if (r != null)
+				return decodeURI(r[2]);
+			return null;
+		}
+
+		window.addEventListener('popstate', function(event) {
+			console.log(event);
+			if (event.state == null) {
+				$('.page1').show();
+				$('.page2').hide();
+				window.couponarr.length == 0 ? $('.sc').text(window.parkCouponCount + '张可用') : $('.sc').text(function() {
+					var p = 0;
+					window.couponarr.map(function(item) {
+						return p = p + Number(item.val);
+					});
+					$('.confirm_pay .chargeMoney').text((Number(window.chargeMoney) - p) < 0 ? 0 : (Number(window.chargeMoney) - p) / 100);
+					return '-¥' + p / 100;
+				}());
+			}
+		});
+		$('body').on('click','.back_prev span:first-child',function(){
+			$('.item input').prop('checked',false).change()
+		})
+		$('body').on('change','.item input',function(e){
+			console.log(e)
+			if(e.target.checked){
+				window.couponarr.push(e.target.dataset)
+			}else{
+				window.couponarr = window.couponarr.filter(function(item) {
+					return item.code != e.target.dataset.code;
+				});
+				$('.selectAll').prop('checked',false)
+			}
+			try{
+				window.couponarr = Array.from(new Set(window.couponarr));
+			}catch(e){
+
+			}
+			console.log(window.couponarr)
+
+			$('.yihouhui').text(function(){
+				var p=0;
+				window.couponarr.map(function(item) {
+					return p = p + Number(item.val);
+				});
+				return p/100
+			})
+		})
+		$('.selectAll').change(function(e){
+			if(e.target.checked){
+				$('.item input').prop('checked',true).change()
+			}else{
+				$('.item input').prop('checked',false).change()
+			}
+		})
+		window.onload=function(){
+			window.page=1,window.size=20,window.canload=true
+
+			$.ajax({
+				type:'post',
+				url:Ip+'/api/park/getCarInfo',
+				contentType: 'application/json;charset=UTF-8',
+				async:false,
+				data:addSecret({carNumber:getQueryString('num')}),
+				success:function (data) {
+					if(data.resCode==0){
+						window.canPay=true 
+						window.chargeMoney=data.data.chargeMoney
+						if(data.data.chargeMoney==0){
+							window.canPay=false
+						}
+						$('.chargeMoney').text(data.data.chargeMoney/100)
+						$('.inTime').text(data.data.inTime)
+						$('.queryTime').text(data.data.queryTime)
+					}else{
+						window.chargeMoney=0
+						layer.msg(data.resMsg)
+					}
+				}
+			})
+			$.ajax({
+				type:'post',
+				url:Ip+'/api/coupon/getMyParkCouponCount',
+				contentType: 'application/json;charset=UTF-8',
+				async:false,
+				data:addSecret({mId:user.id}),
+				success:function (data) {
+					if(data.resCode==0){
+						window.parkCouponCount=data.data.parkCouponCount
+						$('.sc').text(window.couponarr.length==0?data.data.parkCouponCount+'张可用':'')
+					}else{
+						layer.msg(data.resMsg)
+					}
+				}
+			})
+		}
+		$(window).scroll(function(event){  
+         	var wScrollY = window.scrollY; // 当前滚动条位置    
+         	var wInnerH = window.innerHeight; // 设备窗口的高度（不会变）    
+         	var bScrollH = document.body.scrollHeight; // 滚动条总高度        
+         	if (wScrollY + wInnerH == bScrollH) {
+         		if(window.canload){
+         			getCouList()
+         		}
+         	}
+         })
+
+		function onBridgeReady() {
+			WeixinJSBridge.call('hideOptionMenu');
+		}
+
+		if (typeof WeixinJSBridge == "undefined") {
+			if (document.addEventListener) {
+				document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
+			} else if (document.attachEvent) {
+				document.attachEvent('WeixinJSBridgeReady', onBridgeReady);
+				document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);
+			}
+		} else {
+			onBridgeReady();
+		}
+	</script>
+</body>
+</html>
